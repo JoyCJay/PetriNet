@@ -26,14 +26,25 @@ public class petriNet {
     int[][] w = new int[line+1][col+1];
 
     int[]m = {1,1,0};
-
     List<Integer> transitionFranchissableIndex=new ArrayList<Integer>();
 
+    // Temporise
+    int time = 0;
+    int infini = 9999;
+    int[] transitionDuration={5,3,1};
+    int[] finishTimes=new int[col+1];
+    boolean isFirstTime=true;
+    
     petriNet(){
+        // calculate W[]
         for (int i = 0; i <= this.line; i++) {
             for (int j = 0; j <= this.col; j++) {
                 this.w[i][j]=this.post[i][j]-this.pre[i][j];
             }
+        }
+        // initialize finishTimes[]
+        for (int j = 0; j <= this.col; j++) {
+            this.finishTimes[j]=this.infini;
         }
         displayArray();
     }
@@ -73,8 +84,16 @@ public class petriNet {
                 return false;
             }
         }
-        this.transitionFranchissableIndex.add(transitionIndex);
+        if (!this.transitionFranchissableIndex.contains(transitionIndex)){
+            this.transitionFranchissableIndex.add(transitionIndex);
+        }
         return true;
+    }
+
+    public void doTransition(Integer transitionIndex) {
+        for (int i = 0; i <= this.line; i++) {
+            this.m[i] += this.w[i][transitionIndex];
+        }
     }
 
 	public void doAllTransition() {
@@ -87,9 +106,62 @@ public class petriNet {
         System.out.println("New M="+Arrays.toString (this.m));
 	}
 
-    public void doTransition(Integer transitionIndex) {
-        for (int i = 0; i <= this.line; i++) {
-            this.m[i] += this.w[i][transitionIndex];
+	public void doTransitionInTime() {
+        calculateFinishTime();
+        this.time = minValueInArray(this.finishTimes);
+        int whichTransition = minIndexInArray(this.finishTimes);
+
+
+        doTransition(whichTransition); //min index in finishTimes[] == index of transition to do
+        this.transitionFranchissableIndex.remove(whichTransition);
+        this.finishTimes[whichTransition]=this.infini;
+
+        System.out.println("TD| t |  P[line]  |  Td[col]"); // TD=Transition has been done
+        System.out.println(+whichTransition+" | "+this.time+" | "+Arrays.toString (this.m)+" | "+Arrays.toString (this.finishTimes));
+        // System.out.println("After T"+ whichTransition +", franchissable(s):"+this.transitionFranchissableIndex.toString());
+	}
+
+    private void calculateFinishTime() {
+        for (int fIndex : this.transitionFranchissableIndex) {
+            if (this.finishTimes[fIndex]==this.infini) {
+                this.finishTimes[fIndex] = this.time;
+            }
         }
+        System.out.println("reset to now="+Arrays.toString (this.finishTimes));
+
+        if (this.isFirstTime) {
+            this.isFirstTime = false;
+            for (int fIndex : this.transitionFranchissableIndex) {
+                this.finishTimes[fIndex]+= this.transitionDuration[fIndex];
+            }
+        }
+
+        for (int fIndex : this.transitionFranchissableIndex) {
+            if (this.time == this.finishTimes[fIndex]) {
+                this.finishTimes[fIndex]+= this.transitionDuration[fIndex];
+            }
+        }
+        
+        System.out.println("finishTimes="+Arrays.toString (this.finishTimes));
     }
+    private int minIndexInArray(int[] arr) {
+        int min = arr[0];
+        int minIndex = 0;
+        for (int index = 0; index < arr.length; index++) {
+            if (arr[index]<min) {
+                min=arr[index];
+                minIndex=index;
+            }
+        }
+        return minIndex;
+    }
+
+    private int minValueInArray(int[] arr) {
+        int min = this.infini;
+        for (int value : arr) {
+            min = min>value? value:min;
+        }
+        return min;
+    }
+
 }
