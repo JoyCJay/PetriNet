@@ -109,15 +109,17 @@ public class petriNet {
 	public void doTransitionInTime() {
         calculateFinishTime();
         this.time = minValueInArray(this.finishTimes);
-        int whichTransition = minIndexInArray(this.finishTimes);
-
-
-        doTransition(whichTransition); //min index in finishTimes[] == index of transition to do
-        this.transitionFranchissableIndex.remove(whichTransition);
-        this.finishTimes[whichTransition]=this.infini;
-
-        System.out.println("TD| t |  P[line]  |  Td[col]"); // TD=Transition has been done
-        System.out.println(+whichTransition+" | "+this.time+" | "+Arrays.toString (this.m)+" | "+Arrays.toString (this.finishTimes));
+        // there may be serveral minimal value
+        ArrayList<Integer> minTransitions = new ArrayList<Integer>();
+        minTransitions = minIndexesInArray(this.finishTimes);
+        for (Integer whichTransition : minTransitions) {
+            doTransition(whichTransition); //min index in finishTimes[] == index of transition to do
+            this.transitionFranchissableIndex.remove(whichTransition);
+            this.finishTimes[whichTransition]=this.infini;
+        }
+    
+        System.out.println("t | TD |  P[line]  |  Td[col]"); // TD=Transition has been done
+        System.out.println(this.time+" | "+minTransitions.toString()+" | "+Arrays.toString (this.m)+" | "+Arrays.toString (this.finishTimes));
         // System.out.println("After T"+ whichTransition +", franchissable(s):"+this.transitionFranchissableIndex.toString());
 	}
 
@@ -127,7 +129,7 @@ public class petriNet {
                 this.finishTimes[fIndex] = this.time;
             }
         }
-        System.out.println("reset to now="+Arrays.toString (this.finishTimes));
+        // System.out.println("reset to now="+Arrays.toString (this.finishTimes));
 
         if (this.isFirstTime) {
             this.isFirstTime = false;
@@ -144,16 +146,17 @@ public class petriNet {
         
         System.out.println("finishTimes="+Arrays.toString (this.finishTimes));
     }
-    private int minIndexInArray(int[] arr) {
+
+    private ArrayList<Integer> minIndexesInArray(int[] arr) {
+        ArrayList<Integer> minTransitions = new ArrayList<Integer>();
         int min = arr[0];
-        int minIndex = 0;
         for (int index = 0; index < arr.length; index++) {
-            if (arr[index]<min) {
-                min=arr[index];
-                minIndex=index;
-            }
+            if (arr[index]<min) { min=arr[index];}
         }
-        return minIndex;
+        for (int index = 0; index < arr.length; index++) {
+            if (arr[index]==min) { minTransitions.add(index);}
+        }
+        return minTransitions;
     }
 
     private int minValueInArray(int[] arr) {
