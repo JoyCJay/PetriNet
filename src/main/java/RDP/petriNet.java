@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 /**
  * petriNet
  */
 public class petriNet {
-
+    /**
+     *  General variables
+     */
     int line=2;
     int col=2;
 
@@ -28,7 +31,9 @@ public class petriNet {
     int[]m = {1,1,0};
     List<Integer> transitionFranchissableIndex=new ArrayList<Integer>();
 
-    // Temporise
+    /**
+     *  Temporise variables
+     */
     int time = 0;
     int infini = 9999;
     int[] transitionDuration={5,3,1};
@@ -48,7 +53,6 @@ public class petriNet {
         }
         displayArray();
     }
-
     
     public void displayArray() {
         System.out.println("Pre:");
@@ -96,6 +100,9 @@ public class petriNet {
         }
     }
 
+ /**
+ *  Immediate major function
+ */
 	public void doAllTransition() {
         Iterator<Integer> iter = this.transitionFranchissableIndex.iterator();
         while (iter.hasNext()) {
@@ -106,6 +113,9 @@ public class petriNet {
         System.out.println("New M="+Arrays.toString (this.m));
 	}
 
+/**
+ *  Temporise major function
+ */
 	public void doTransitionInTime() {
         calculateFinishTime();
         this.time = minValueInArray(this.finishTimes);
@@ -120,16 +130,15 @@ public class petriNet {
     
         System.out.println("t | TD |  P[line]  |  Td[col]"); // TD=Transition has been done
         System.out.println(this.time+" | "+minTransitions.toString()+" | "+Arrays.toString (this.m)+" | "+Arrays.toString (this.finishTimes));
-        // System.out.println("After T"+ whichTransition +", franchissable(s):"+this.transitionFranchissableIndex.toString());
 	}
 
     private void calculateFinishTime() {
+        // reset to now
         for (int fIndex : this.transitionFranchissableIndex) {
             if (this.finishTimes[fIndex]==this.infini) {
                 this.finishTimes[fIndex] = this.time;
             }
         }
-        // System.out.println("reset to now="+Arrays.toString (this.finishTimes));
 
         if (this.isFirstTime) {
             this.isFirstTime = false;
@@ -167,4 +176,40 @@ public class petriNet {
         return min;
     }
 
+    /**
+     *  Temporise stochastique major function
+     */
+	public void stochastique(double lambda) {
+        calculateFinishTime();
+        this.time = minValueInArray(this.finishTimes);
+        ArrayList<Integer> minTransitions = new ArrayList<Integer>();
+        minTransitions = minIndexesInArray(this.finishTimes);
+        for (Integer whichTransition : minTransitions) {
+            // difference with temporise
+            if (this.isPossibleToDo(lambda)) {
+                System.out.println("Do: T"+whichTransition);
+                doTransition(whichTransition);
+            }
+            else {
+                System.out.println("Not do: T"+whichTransition);
+            }
+            this.transitionFranchissableIndex.remove(whichTransition);
+            this.finishTimes[whichTransition]=this.infini;
+        }
+        System.out.println("t |  P[line]  |  Td[col]");
+        System.out.println(this.time+" | "+Arrays.toString (this.m)+" | "+Arrays.toString (this.finishTimes));
+	}
+
+    boolean isPossibleToDo(double lambda){
+        /**
+         * p obey the index distribution(loi expotentielle)
+         * In time t，the possibility to do
+         * 0<=p<=1
+         */
+        double p = 1 - Math.exp(-1.0 * lambda * this.time);
+        Random random = new Random();
+        double ref = random.nextDouble(); // ref is random to compare with p
+        System.out.println("In time:"+this.time+",  p="+p+"  |  ref="+ref);
+        return p>ref?true:false;
+    }
 }
